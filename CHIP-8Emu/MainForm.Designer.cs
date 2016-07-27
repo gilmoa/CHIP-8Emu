@@ -52,6 +52,8 @@ namespace CHIP_8Emu
             this.ClientSize = new System.Drawing.Size(512, 256);
             this.Controls.Add(this.screenPB);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CHIP-8 Emulator";
