@@ -11,7 +11,7 @@ namespace CHIP_8Emu
 
         // Hardware specific function
         private Action<bool[,]> Draw;               // Draw on screen               
-        private Action Beep;                        // Beep
+        private Action<int> Beep;                        // Beep
 
         private byte[] memory = new byte[0x1000];   // 4K 8-bit memory
         private byte[] V = new byte[16];            // 16 8-bit registers
@@ -38,7 +38,7 @@ namespace CHIP_8Emu
         private Dictionary<byte, Action<OpCodeType>> OpCodes;
 
         // Key currenty Pressed
-        HashSet<byte> pressedKeys = new HashSet<byte>();
+        HashSet<byte> keyPressed = new HashSet<byte>();
 
         // Standard CHIP 8 Fontset
         private byte[] FontSet = new byte[]
@@ -63,7 +63,7 @@ namespace CHIP_8Emu
         
         // Constructor allow hardware emulation to pass custom
         // functions to handle Draw to screen and Sound Beep
-        public Chip8(Action<bool[,]> Draw, Action Beep)
+        public Chip8(Action<bool[,]> Draw, Action<int> Beep)
         {
             this.Draw = Draw;
             this.Beep = Beep;
@@ -112,7 +112,7 @@ namespace CHIP_8Emu
             soundTimer = 0;
 
             rnd = new Random();                         // Random
-            pressedKeys.Clear();                        // Pressed keys
+            keyPressed.Clear();                        // Pressed keys
 
             // Load first 0x200 bytes with fontset
             LoadMemory(FontSet, 0x00);
@@ -251,8 +251,8 @@ namespace CHIP_8Emu
         }
 
         // Main CPU cycle
-        // Fetch OpCode, run instruction, increment pc,
-        // draw and update timers
+        // Fetch OpCode, increment pc and run instruction
+        // Should run at 400Hz
         public void Cycle()
         {
             // Fetch Opcode
@@ -263,25 +263,40 @@ namespace CHIP_8Emu
 
             // Run Instruction
             OpCodes[OpCode.S](OpCode);
+        }
 
-            // Draw
+        // Cycle for timers and screen
+        // Should run at 60Hz
+        public void TimerCycle()
+        {
+            // Update timers
+            if (delayTimer > 0)
+                delayTimer--;
+
+            if (soundTimer > 0)
+            {
+                Beep(soundTimer * (1000 / 60));
+                soundTimer = 0;
+            }
+
+            //Draw
             if (drawFlag)
             {
                 Draw(gfx);
                 drawFlag = false;
             }
+        }
 
-            // Update timers
-            if (delayTimer > 0)
-                delayTimer--;
+        // Track key state Pressed
+        public void KeyDown(byte key)
+        {
+            keyPressed.Add(key);
+        }
 
-            if(soundTimer > 0)
-            {
-                if (soundTimer == 1)
-                    Beep();
-                soundTimer--;
-            }
-
+        // Track key state Released
+        public void KeyUp(byte key)
+        {
+            keyPressed.Remove(key);
         }
 
         #region OpCodes Implementations
@@ -496,7 +511,7 @@ namespace CHIP_8Emu
                     break;
                 // EXA1 - Skips the next instruction if the key stored in VX isn't pressed.
                 case 0xa1:
-                    if (!pressedKeys.Contains(V[op.X]))
+                    if (!keyPressed.Contains(V[op.X]))
                         pc += 2;
                     break;
                 default:
