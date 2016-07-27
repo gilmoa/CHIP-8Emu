@@ -196,22 +196,6 @@ namespace CHIP_8Emu
             Environment.Exit(1);
         }
 
-        // Test every screen pixel
-        public void TestScreen()
-        {
-            for (int y = 0; y < SHeight; y++)
-            {
-                for (int x = 0; x < SWidth; x++)
-                {
-                    gfx[x, y] = true;
-                    Draw(gfx);
-                }
-            }
-
-            Array.Clear(gfx, 0, gfx.Length);
-            Draw(gfx);
-        }
-
         //
         // END DEBUGGING FUNCTIONS
         //
