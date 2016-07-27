@@ -6,8 +6,8 @@ namespace CHIP_8Emu
 {
     class Chip8
     {
-        const int SWidth = 64;                      // Fixed screen is 64x32
-        const int SHeight = 32;
+        private const int SWidth = 64;                      // Fixed screen is 64x32
+        private const int SHeight = 32;
 
         // Hardware specific function
         private Action<bool[,]> draw;               // Draw on screen               
@@ -73,22 +73,22 @@ namespace CHIP_8Emu
             // OpCodes definition
             OpCodes = new Dictionary<byte, Action<OpCodeType>>()
             {
-                //{ 0x0, ClearOrRtn },
-                //{ 0x1, Jmp },
-                //{ 0x2, Call },
-                //{ 0x3, SkipIfXEqual },
-                //{ 0x4, SkipIfXNotEqual },
-                //{ 0x5, SkipIfXEqualY },
-                //{ 0x6, SetX },
-                //{ 0x7, AddX },
-                //{ 0x8, Arith },
-                //{ 0x9, SkipIfXNotEqualY },
-                //{ 0xa, SetI },
-                //{ 0xb, JmpOffset },
-                //{ 0xc, RndAndX },
-                //{ 0xd, DrawSprite },
-                //{ 0xe, SkipKeyed },
-                //{ 0xd, More }
+                { 0x0, ClearOrRtn },
+                { 0x1, Jmp },
+                { 0x2, Call },
+                { 0x3, SkipIfXEqual },
+                { 0x4, SkipIfXNotEqual },
+                { 0x5, SkipIfXEqualY },
+                { 0x6, SetX },
+                { 0x7, AddX },
+                { 0x8, Arith },
+                { 0x9, SkipIfXNotEqualY },
+                { 0xa, SetI },
+                { 0xb, JmpOffset },
+                { 0xc, RndAndX },
+                { 0xd, DrawSprite },
+                { 0xe, SkipKeyed },
+                { 0xf, More }
             };
         }
 
@@ -162,6 +162,15 @@ namespace CHIP_8Emu
                 
             }
             lines.Add(memoryLine);
+            // Gfx
+            lines.Add("GFX".PadRight(15, '='));
+            for (int y = 0; y < SHeight; y++)
+            {
+                string gfxLine = "";
+                for (int x = 0; x < SWidth; x++)
+                    gfxLine += gfx[x, y] ? "1" : "0";
+                lines.Add(gfxLine);
+            }
             // End
             lines.Add("END".PadRight(15, '='));
             // Write out
@@ -232,6 +241,7 @@ namespace CHIP_8Emu
             return new OpCodeType()
             {
                 opcode = op,
+                S   = (byte)((op & 0xf000) >> 12),
                 X   = (byte)((op & 0x0f00) >> 8),
                 Y   = (byte)((op & 0x00f0) >> 4),
                 N   = (byte)(op & 0x000f),
@@ -251,9 +261,139 @@ namespace CHIP_8Emu
             pc += 2;
 
             // Run Instruction
+            OpCodes[OpCode.S](OpCode);
 
             // Update timers
-            
+
         }
+
+        #region OpCodes Implementations
+        //
+        // OPCODES IMPLEMENTATION
+        // DESCRIPTION: https://en.wikipedia.org/wiki/CHIP-8#Opcode_table
+        //
+
+        // 0x0
+        // 00E0 - Clears the screen.
+        // 00EE - Returns from a subroutine.
+        private void ClearOrRtn(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x1
+        // 1NNN - Jumps to address NNN.
+        private void Jmp(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x2
+        // 2NNN - Calls subroutine at NNN.
+        private void Call(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x3
+        // 3XNN - Skips the next instruction if VX equals NN.
+        private void SkipIfXEqual(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x4
+        // 4XNN - Skips the next instruction if VX doesn't equal NN.
+        private void SkipIfXNotEqual(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x5
+        // 5XY0 - Skips the next instruction if VX equals VY.
+        private void SkipIfXEqualY(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x6
+        // 6XNN - Sets VX to NN.
+        private void SetX(OpCodeType op)
+        {
+            V[op.X] = op.NN;
+        }
+
+        // 0x7
+        // 7XNN - Adds NN to VX.
+        private void AddX(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x8
+        // Arithmetic switch on 0x000f.
+        private void Arith(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0x9
+        // 9XY0 - Skips the next instruction if VX doesn't equal VY.
+        private void SkipIfXNotEqualY(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0xa
+        // ANNN - Sets I to the address NNN.
+        private void SetI(OpCodeType op)
+        {
+            I = op.NNN;
+        }
+
+        // 0xb
+        // BNNN - Jumps to the address NNN plus V0.
+        private void JmpOffset(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0xc
+        // CXNN - Sets VX to the result of a bitwise and operation on
+        //        a random number and NN.
+        private void RndAndX(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0xd
+        // DXYN - Draws a sprite at coordinate (VX, VY) that has a width of
+        //        8 pixels and a height of N pixels. Each row of 8 pixels is
+        //        read as bit-coded starting from memory location I; I value
+        //        doesn’t change after the execution of this instruction. 
+        //        As described above, VF is set to 1 if any screen pixels are
+        //        flipped from set to unset when the sprite is drawn, and to
+        //        0 if that doesn’t happen.
+        private void DrawSprite(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0xe
+        // EX9E - Skips the next instruction if the key stored in VX is pressed.
+        // EXA1 - Skips the next instruction if the key stored in VX isn't pressed.
+        private void SkipKeyed(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        // 0xf
+        // Operation switch on 0x00ff.
+        private void More(OpCodeType op)
+        {
+            UnimplementedInstruction();
+        }
+
+        #endregion
     }
 }
