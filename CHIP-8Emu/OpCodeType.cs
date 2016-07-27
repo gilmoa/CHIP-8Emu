@@ -5,6 +5,6 @@ namespace CHIP_8Emu
     {
         public ushort opcode;
         public ushort NNN;
-        public byte X, Y, N, NN;
+        public byte S, X, Y, N, NN;
     }
 }
