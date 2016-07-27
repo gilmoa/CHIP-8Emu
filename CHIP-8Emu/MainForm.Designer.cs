@@ -39,8 +39,7 @@ namespace CHIP_8Emu
             this.screenPB.Dock = System.Windows.Forms.DockStyle.Fill;
             this.screenPB.Location = new System.Drawing.Point(0, 0);
             this.screenPB.Name = "screenPB";
-            this.screenPB.Size = new System.Drawing.Size(512, 256);
-            this.screenPB.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.screenPB.Size = new System.Drawing.Size(538, 281);
             this.screenPB.TabIndex = 0;
             this.screenPB.TabStop = false;
             // 
@@ -49,7 +48,7 @@ namespace CHIP_8Emu
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(512, 256);
+            this.ClientSize = new System.Drawing.Size(538, 281);
             this.Controls.Add(this.screenPB);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
