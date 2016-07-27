@@ -38,7 +38,7 @@ namespace CHIP_8Emu
         private Dictionary<byte, Action<OpCodeType>> OpCodes;
 
         // Key currenty Pressed
-        HashSet<byte> keyPressed = new HashSet<byte>();
+        List<byte> keyPressed = new List<byte>();
 
         // Standard CHIP 8 Fontset
         private byte[] FontSet = new byte[]
@@ -274,7 +274,8 @@ namespace CHIP_8Emu
         // Track key state Pressed
         public void KeyDown(byte key)
         {
-            keyPressed.Add(key);
+            if(!keyPressed.Contains(key))
+                keyPressed.Add(key);
         }
 
         // Track key state Released
@@ -298,7 +299,7 @@ namespace CHIP_8Emu
             {
                 // 00E0 - Clears the screen.
                 case 0x0e0:
-                    UnimplementedInstruction();
+                    Array.Clear(gfx, 0, gfx.Length);
                     break;
                 // 00EE - Returns from a subroutine.
                 case 0x0ee:
@@ -380,7 +381,7 @@ namespace CHIP_8Emu
                     break;
                 // 8XY3 - Sets VX to VX xor VY.
                 case 0x3:
-                    UnimplementedInstruction();
+                    V[op.X] ^= V[op.Y];
                     break;
                 // 8XY4 - Adds VY to VX. VF is set to 1 when there's
                 //        a carry, and to 0 when there isn't.
@@ -397,7 +398,8 @@ namespace CHIP_8Emu
                 // 8XY6 - Shifts VX right by one. VF is set to the value
                 //        of the least significant bit of VX before the shift.
                 case 0x6:
-                    UnimplementedInstruction();
+                    V[0xf] = (byte)(V[op.X] & 0x01);
+                    V[op.X] /= 2;
                     break;
                 // 8XY7	- Sets VX to VY minus VX. VF is set to 0 when 
                 //        there's a borrow, and 1 when there isn't.
@@ -491,7 +493,8 @@ namespace CHIP_8Emu
             {
                 // EX9E - Skips the next instruction if the key stored in VX is pressed.
                 case 0x9e:
-                    UnimplementedInstruction();
+                    if (keyPressed.Contains(V[op.X]))
+                        pc += 2;
                     break;
                 // EXA1 - Skips the next instruction if the key stored in VX isn't pressed.
                 case 0xa1:
@@ -516,7 +519,10 @@ namespace CHIP_8Emu
                     break;
                 // FX0A - A key press is awaited, and then stored in VX.
                 case 0x0a:
-                    UnimplementedInstruction();
+                    if (keyPressed.Count > 0)
+                        V[op.X] = keyPressed[0];
+                    else
+                        pc -= 2;
                     break;
                 // FX15 - Sets the delay timer to VX.
                 case 0x15:
@@ -529,7 +535,8 @@ namespace CHIP_8Emu
                 // FX1E - Adds VX to I. VF is set to 1 when range 
                 //        overflow (I+VX>0xFFF), and 0 when there isn't.
                 case 0x1e:
-                    UnimplementedInstruction();
+                    V[0xf] = (byte)((I + V[op.X]) > 0xfff ? 1 : 0);
+                    I += V[op.X];
                     break;
                 // FX29 - Sets I to the location of the sprite for the character
                 //        in VX. Characters 0-F (in hexadecimal) are represented
