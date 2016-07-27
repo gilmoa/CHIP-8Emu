@@ -1,10 +1,8 @@
 using System;
 using System.Drawing;
-using System.Diagnostics;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
-using System.Threading;
 
 namespace CHIP_8Emu
 {
@@ -17,7 +15,7 @@ namespace CHIP_8Emu
         {
             InitializeComponent();
 
-            screen = new Bitmap(screenPB.Width, screenPB.Height, PixelFormat.Format32bppArgb);
+            screen = new Bitmap(64, 32, PixelFormat.Format32bppArgb);
             screenPB.Image = screen;
         }
 
@@ -27,8 +25,10 @@ namespace CHIP_8Emu
 
             CPU.LoadROM("rom/PONG");
 
-            Thread screenTestThread = new Thread(CPU.TestScreen);
-            screenTestThread.Start();
+            while(true)
+            {
+                CPU.Cycle();
+            }
         }
 
         private void DrawScreen(bool[,] gfx)
