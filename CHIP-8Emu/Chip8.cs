@@ -6,12 +6,12 @@ namespace CHIP_8Emu
 {
     class Chip8
     {
-        private const int SWidth = 64;                      // Fixed screen is 64x32
+        private const int SWidth = 64;              // Fixed screen is 64x32
         private const int SHeight = 32;
 
         // Hardware specific function
-        private Action<bool[,]> draw;               // Draw on screen               
-        private Action<int> beep;                   // Beep
+        private Action<bool[,]> Draw;               // Draw on screen               
+        private Action Beep;                        // Beep
 
         private byte[] memory = new byte[0x1000];   // 4K 8-bit memory
         private byte[] V = new byte[16];            // 16 8-bit registers
@@ -63,10 +63,10 @@ namespace CHIP_8Emu
         
         // Constructor allow hardware emulation to pass custom
         // functions to handle Draw to screen and Sound Beep
-        public Chip8(Action<bool[,]> draw, Action<int> beep)
+        public Chip8(Action<bool[,]> Draw, Action Beep)
         {
-            this.draw = draw;
-            this.beep = beep;
+            this.Draw = Draw;
+            this.Beep = Beep;
 
             Reset();
 
@@ -204,12 +204,12 @@ namespace CHIP_8Emu
                 for (int x = 0; x < SWidth; x++)
                 {
                     gfx[x, y] = true;
-                    draw(gfx);
+                    Draw(gfx);
                 }
             }
 
             Array.Clear(gfx, 0, gfx.Length);
-            draw(gfx);
+            Draw(gfx);
         }
 
         //
@@ -251,7 +251,8 @@ namespace CHIP_8Emu
         }
 
         // Main CPU cycle
-        // Fetch OpCode, increment pc, run instruction
+        // Fetch OpCode, run instruction, increment pc,
+        // draw and update timers
         public void Cycle()
         {
             // Fetch Opcode
@@ -263,7 +264,23 @@ namespace CHIP_8Emu
             // Run Instruction
             OpCodes[OpCode.S](OpCode);
 
+            // Draw
+            if (drawFlag)
+            {
+                Draw(gfx);
+                drawFlag = false;
+            }
+
             // Update timers
+            if (delayTimer > 0)
+                delayTimer--;
+
+            if(soundTimer > 0)
+            {
+                if (soundTimer == 1)
+                    Beep();
+                soundTimer--;
+            }
 
         }
 
@@ -278,35 +295,49 @@ namespace CHIP_8Emu
         // 00EE - Returns from a subroutine.
         private void ClearOrRtn(OpCodeType op)
         {
-            UnimplementedInstruction();
+            switch(op.NNN)
+            {
+                // 00E0 - Clears the screen.
+                case 0x0e0:
+                    UnimplementedInstruction();
+                    break;
+                // 00EE - Returns from a subroutine.
+                case 0x0ee:
+                    pc = stack[--sp];
+                    break;
+                default:
+                    UnimplementedInstruction();
+                    break;
+            }
         }
 
         // 0x1
         // 1NNN - Jumps to address NNN.
         private void Jmp(OpCodeType op)
         {
-            UnimplementedInstruction();
+            pc = op.NNN;
         }
 
         // 0x2
         // 2NNN - Calls subroutine at NNN.
         private void Call(OpCodeType op)
         {
-            UnimplementedInstruction();
+            stack[sp++] = pc;
+            pc = op.NNN;
         }
 
         // 0x3
         // 3XNN - Skips the next instruction if VX equals NN.
         private void SkipIfXEqual(OpCodeType op)
         {
-            UnimplementedInstruction();
+            if (V[op.X] == op.NN) pc += 2;
         }
 
         // 0x4
         // 4XNN - Skips the next instruction if VX doesn't equal NN.
         private void SkipIfXNotEqual(OpCodeType op)
         {
-            UnimplementedInstruction();
+            if (V[op.X] != op.NN) pc += 2;
         }
 
         // 0x5
@@ -327,14 +358,62 @@ namespace CHIP_8Emu
         // 7XNN - Adds NN to VX.
         private void AddX(OpCodeType op)
         {
-            UnimplementedInstruction();
+            V[op.X] += op.NN;
         }
 
         // 0x8
         // Arithmetic switch on 0x000f.
         private void Arith(OpCodeType op)
         {
-            UnimplementedInstruction();
+            switch(op.N)
+            {
+                // 8XY0 - Sets VX to the value of VY.
+                case 0x0:
+                    V[op.X] = V[op.Y];
+                    break;
+                // 8XY1 - Sets VX to VX or VY.
+                case 0x1:
+                    UnimplementedInstruction();
+                    break;
+                // 8XY2 - Sets VX to VX and VY.
+                case 0x2:
+                    V[op.X] &= V[op.Y];
+                    break;
+                // 8XY3 - Sets VX to VX xor VY.
+                case 0x3:
+                    UnimplementedInstruction();
+                    break;
+                // 8XY4 - Adds VY to VX. VF is set to 1 when there's
+                //        a carry, and to 0 when there isn't.
+                case 0x4:
+                    V[0xf] = (byte)((V[op.X] + V[op.Y]) > 0xff ? 1 : 0);
+                    V[op.X] += V[op.Y];
+                    break;
+                // 8XY5 - VY is subtracted from VX. VF is set to 0
+                //        when there's a borrow, and 1 when there isn't.
+                case 0x5:
+                    V[0xf] = (byte)(V[op.Y] > V[op.X] ? 0 : 1);
+                    V[op.X] -= V[op.Y];
+                    break;
+                // 8XY6 - Shifts VX right by one. VF is set to the value
+                //        of the least significant bit of VX before the shift.
+                case 0x6:
+                    UnimplementedInstruction();
+                    break;
+                // 8XY7	- Sets VX to VY minus VX. VF is set to 0 when 
+                //        there's a borrow, and 1 when there isn't.
+                case 0x7:
+                    UnimplementedInstruction();
+                    break;
+                // 8XYE - Shifts VX left by one. VF is set to the value
+                //        of the most significant bit of VX before the shift.
+                case 0xe:
+                    UnimplementedInstruction();
+                    break;
+                default:
+                    UnimplementedInstruction();
+                    break;
+            }
         }
 
         // 0x9
@@ -363,7 +442,7 @@ namespace CHIP_8Emu
         //        a random number and NN.
         private void RndAndX(OpCodeType op)
         {
-            UnimplementedInstruction();
+            V[op.X] = (byte)(rnd.Next() & op.NN);
         }
 
         // 0xd
@@ -376,7 +455,32 @@ namespace CHIP_8Emu
         //        0 if that doesn’t happen.
         private void DrawSprite(OpCodeType op)
         {
-            UnimplementedInstruction();
+            byte startX = V[op.X];
+            byte startY = V[op.Y];
+            byte h = op.N;
+
+            V[0xf] = 0;
+
+            for (int i = 0; i < h; i++)
+            {
+                byte spriteByte = memory[I + i];
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    int x = (startX + bit) % SWidth;
+                    int y = (startY + i) % SHeight;
+
+                    byte spriteBit = (byte)((spriteByte >> (7 - bit)) & 0x01);
+                    byte oldBit = (byte)(gfx[x, y] ? 1 : 0);
+                    if (spriteBit != oldBit)
+                        drawFlag = true;
+
+                    byte newBit = (byte)(spriteBit ^ oldBit);
+                    gfx[x, y] = (newBit == 0x01) ? true : false;
+
+                    if (oldBit == 0x01 && newBit == 0x00)
+                        V[0xf] = 1;
+                }
+            }
         }
 
         // 0xe
@@ -384,14 +488,80 @@ namespace CHIP_8Emu
         // EXA1 - Skips the next instruction if the key stored in VX isn't pressed.
         private void SkipKeyed(OpCodeType op)
         {
-            UnimplementedInstruction();
+            switch(op.NN)
+            {
+                // EX9E - Skips the next instruction if the key stored in VX is pressed.
+                case 0x9e:
+                    UnimplementedInstruction();
+                    break;
+                // EXA1 - Skips the next instruction if the key stored in VX isn't pressed.
+                case 0xa1:
+                    if (!pressedKeys.Contains(V[op.X]))
+                        pc += 2;
+                    break;
+                default:
+                    UnimplementedInstruction();
+                    break;
+            }
         }
 
         // 0xf
         // Operation switch on 0x00ff.
         private void More(OpCodeType op)
         {
-            UnimplementedInstruction();
+            switch(op.NN)
+            {
+                // FX07 - Sets VX to the value of the delay timer.
+                case 0x07:
+                    V[op.X] = delayTimer;
+                    break;
+                // FX0A - A key press is awaited, and then stored in VX.
+                case 0x0a:
+                    UnimplementedInstruction();
+                    break;
+                // FX15 - Sets the delay timer to VX.
+                case 0x15:
+                    delayTimer = V[op.X];
+                    break;
+                // FX18 - Sets the sound timer to VX.
+                case 0x18:
+                    soundTimer = V[op.X];
+                    break;
+                // FX1E - Adds VX to I. VF is set to 1 when range 
+                //        overflow (I+VX>0xFFF), and 0 when there isn't.
+                case 0x1e:
+                    UnimplementedInstruction();
+                    break;
+                // FX29 - Sets I to the location of the sprite for the character
+                //        in VX. Characters 0-F (in hexadecimal) are represented
+                //        by a 4x5 font.
+                case 0x29:
+                    I = (ushort)(V[op.X] * 5);
+                    break;
+                // FX33 - Stores the binary-coded decimal representation of VX,
+                //        with the most significant of three digits at the
+                //        address in I, the middle digit at I plus 1, and
+                //        the least significant digit at I plus 2.
+                case 0x33:
+                    memory[I]     = (byte)((V[op.X] / 100) % 10);
+                    memory[I + 1] = (byte)((V[op.X] / 10) % 10);
+                    memory[I + 2] = (byte)(V[op.X] % 10);
+                    break;
+                // FX55 - Stores V0 to VX (including VX) in memory starting
+                //        at address I.
+                case 0x55:
+                    UnimplementedInstruction();
+                    break;
+                // FX65 - Fills V0 to VX (including VX) with values from
+                //        memory starting at address I.
+                case 0x65:
+                    for (int i = 0; i <= op.X; i++)
+                        V[i] = memory[I + i];
+                    break;
+                default:
+                    UnimplementedInstruction();
+                    break;
+            }
         }
 
         #endregion
