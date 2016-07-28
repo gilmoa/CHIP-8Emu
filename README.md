@@ -1,7 +1,14 @@
 # CHIP-8Emu
-My test at writing an emulator. It works fine, not top notch.  
-I tell myself it's because it wasn't meant to be good in 
-the first place.
+My test at writing an emulator. It works fine, not top notch.
+
+I tell myself it's because it wasn't meant to be good in the first place.
+
+***
+
+## Images
+My first run on PONG:
+
+![first run](https://raw.githubusercontent.com/gilmoa/CHIP-8Emu/master/first_run.jpg "First Run on PONG")
 
 ***
 
@@ -15,31 +22,9 @@ the first place.
 
 ## Tested
 The emulator has been tested with the following ROMs from [David Winter](http://www.pong-story.com/chip8/):
-> * 15PUZZLE
-> * BLINKY
-> * BLITZ
-> * BREAKOUT
-> * BRIX
-> * CONNECT4
-> * GUESS `*`
-> * HIDDEN `*`
-> * INVADERS
-> * KALEID
-> * MAZE
-> * MERLIN
-> * MISSILE
-> * PONG
-> * PONG2
-> * PUZZLE `*`
-> * SQUASH
-> * SYZYGY
-> * TANK
-> * TETRIS
-> * TICTAC
-> * UFO
-> * VBRIX
-> * VERS
-> * WALL
-> * WIPEOFF
-
-`*` = Speed is off, game running too fast.
+```
+15PUZZLE   BLINKY     BLITZ      BREAKOUT   BRIX       CONNECT4   GUESS *    HIDDEN *
+INVADERS   KALEID     MAZE       MERLIN     MISSILE    PONG       PONG2      PUZZLE *
+SQUASH     SYZYGY     TANK       TETRIS     TICTAC     UFO        VBRIX      VERS
+WALL       WIPEOFF                           * = Speed is off, game running too fast.
+```
