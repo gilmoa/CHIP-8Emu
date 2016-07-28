@@ -4,11 +4,10 @@ My test at writing an emulator.
 ***
 
 ## TODOs
- 1. Proper `Beep`, possibly not halting `TimerCycle()` DUH.
+ 1. `Beep()` still confusing.
  2. Input might still need fixing.
  3. `0xDXYN` looks like shit and might not be working as intended.
  4. `DrawScreen()` works fine but might need a review.
- 5. Still missing OpCode `0xBNNN`. Can't test it.
 
 ***
 
