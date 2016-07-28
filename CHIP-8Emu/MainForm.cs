@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
 using System.Media;
-using System.Diagnostics;
 
 namespace CHIP_8Emu
 {
@@ -17,8 +16,8 @@ namespace CHIP_8Emu
         private Bitmap screen;
         private TimeSpan clock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 400);
         private TimeSpan screenClock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-        private string ROM = "rom/GILMO";
-        private SoundPlayer beepSound = new SoundPlayer("beep.wav");
+        private SoundPlayer beepSound = new SoundPlayer(Properties.Resources.beep_sound);
+        private string ROM;
 
         public MainForm()
         {
@@ -34,8 +33,8 @@ namespace CHIP_8Emu
         private void MainForm_Load(object sender, EventArgs e)
         {
             Chip8 = new Chip8(DrawScreen, Beep);
-            
-            Chip8.LoadROM(ROM);
+
+            beepSound.Load();
             
             Task.Run(CPULoop);
             Task.Run(TimersLoop);

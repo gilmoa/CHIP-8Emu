@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CHIP_8Emu
 {
@@ -93,6 +94,9 @@ namespace CHIP_8Emu
                 { 0xe, SkipKeyed },
                 { 0xf, More }
             };
+
+            // On init load my custom rom
+            LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
         // Reset CPU starting state
@@ -119,6 +123,7 @@ namespace CHIP_8Emu
 
             // Load first 0x200 bytes with fontset
             LoadMemory(FontSet, 0x00);
+            LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
         // Halt execution
@@ -224,7 +229,8 @@ namespace CHIP_8Emu
         // Load program at path into execution memory
         public void LoadROM(string path)
         {
-            LoadMemory(File.ReadAllBytes(path), 0x200);
+            if(File.Exists(path))
+                LoadMemory(File.ReadAllBytes(path), 0x200);
         }
 
         // Get OpCode from memory
@@ -254,9 +260,10 @@ namespace CHIP_8Emu
             // Back to last OpCode
             pc -= 2;
             ushort opcode = GetOpCode();
-
+            
             DumpCPUState();
 
+            // MessageBox the OpCode
             System.Windows.Forms.MessageBox.Show(
                 "Bad OpCode:\n\n" + opcode.ToString("x04") + " - found at 0x" + pc.ToString("x04") + "." +
                 "\n\nIs not a valid OpCode." +
@@ -265,6 +272,7 @@ namespace CHIP_8Emu
                 System.Windows.Forms.MessageBoxButtons.OK,
                 System.Windows.Forms.MessageBoxIcon.Error);
 
+            // Exit
             Environment.Exit(1);
         }
 
@@ -485,7 +493,7 @@ namespace CHIP_8Emu
         // BNNN - Jumps to the address NNN plus V0.
         private void JmpOffset(OpCodeType op)
         {
-            UnimplementedInstruction();
+            pc = (byte)(op.NNN + V[0]);
         }
 
         // 0xc
