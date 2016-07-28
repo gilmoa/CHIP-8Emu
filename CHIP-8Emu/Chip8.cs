@@ -28,8 +28,11 @@ namespace CHIP_8Emu
         private byte delayTimer;
         private byte soundTimer;
 
-        // draw only when needed
+        // Draw only when needed
         private bool drawFlag = false;
+
+        // Running state
+        private bool running = true;
 
         // Instructions need random number
         Random rnd = new Random();
@@ -112,11 +115,22 @@ namespace CHIP_8Emu
             soundTimer = 0;
 
             rnd = new Random();                         // Random
-            keyPressed.Clear();                        // Pressed keys
+            keyPressed.Clear();                         // Pressed keys
 
             // Load first 0x200 bytes with fontset
             LoadMemory(FontSet, 0x00);
+        }
 
+        // Halt execution
+        public void Sleep()
+        {
+            running = false;
+        }
+
+        // Continue execution
+        public void Wake()
+        {
+            running = true;
         }
 
         #region DEBUGGING FUNCTIONS
@@ -234,11 +248,35 @@ namespace CHIP_8Emu
             };
         }
 
+        // Handle Bad OpCodes
+        private void BadOpCode()
+        {
+            // Back to last OpCode
+            pc -= 2;
+            ushort opcode = GetOpCode();
+
+            DumpCPUState();
+
+            System.Windows.Forms.MessageBox.Show(
+                "Bad OpCode:\n\n" + opcode.ToString("x04") + " - found at 0x" + pc.ToString("x04") + "." +
+                "\n\nIs not a valid OpCode." +
+                "\n\nCPU State Dumped to 'cpu.dump'.",
+                "Bad OpCode",
+                System.Windows.Forms.MessageBoxButtons.OK,
+                System.Windows.Forms.MessageBoxIcon.Error);
+
+            Environment.Exit(1);
+        }
+
         // Main CPU cycle
         // Fetch OpCode, increment pc and run instruction
         // Should run at 400Hz
         public void Cycle()
         {
+            // Check if we are running
+            if (!running)
+                return;
+
             // Fetch Opcode
             OpCodeType OpCode = ParseOpCode(GetOpCode());
 
@@ -253,6 +291,10 @@ namespace CHIP_8Emu
         // Should run at 60Hz
         public void TimerCycle()
         {
+            // Check if we are running
+            if (!running)
+                return;
+
             // Update timers
             if (delayTimer > 0)
                 delayTimer--;
@@ -344,7 +386,10 @@ namespace CHIP_8Emu
         // 5XY0 - Skips the next instruction if VX equals VY.
         private void SkipIfXEqualY(OpCodeType op)
         {
-            UnimplementedInstruction();
+            if (op.N != 0x0)
+                BadOpCode();
+            if (V[op.X] == V[op.Y])
+                pc += 2;
         }
 
         // 0x6
@@ -373,7 +418,7 @@ namespace CHIP_8Emu
                     break;
                 // 8XY1 - Sets VX to VX or VY.
                 case 0x1:
-                    UnimplementedInstruction();
+                    V[op.X] |= V[op.Y];
                     break;
                 // 8XY2 - Sets VX to VX and VY.
                 case 0x2:
@@ -404,12 +449,14 @@ namespace CHIP_8Emu
                 // 8XY7	- Sets VX to VY minus VX. VF is set to 0 when 
                 //        there's a borrow, and 1 when there isn't.
                 case 0x7:
-                    UnimplementedInstruction();
+                    V[0xf] = (byte)(V[op.X] > V[op.Y] ? 0 : 1);
+                    V[op.X] = (byte)(V[op.Y] - V[op.X]);
                     break;
                 // 8XYE - Shifts VX left by one. VF is set to the value
                 //        of the most significant bit of VX before the shift.
                 case 0xe:
-                    UnimplementedInstruction();
+                    V[0xf] = (byte)(V[op.X] & 0x80);
+                    V[op.X] *= 2;
                     break;
                 default:
                     UnimplementedInstruction();
@@ -421,7 +468,10 @@ namespace CHIP_8Emu
         // 9XY0 - Skips the next instruction if VX doesn't equal VY.
         private void SkipIfXNotEqualY(OpCodeType op)
         {
-            UnimplementedInstruction();
+            if (op.N != 0x0)
+                BadOpCode();
+            if (V[op.X] != V[op.Y])
+                pc += 2;
         }
 
         // 0xa
@@ -443,7 +493,7 @@ namespace CHIP_8Emu
         //        a random number and NN.
         private void RndAndX(OpCodeType op)
         {
-            V[op.X] = (byte)(rnd.Next() & op.NN);
+            V[op.X] = (byte)(rnd.Next(0, 256) & op.NN);
         }
 
         // 0xd
@@ -467,8 +517,10 @@ namespace CHIP_8Emu
                 byte spriteByte = memory[I + i];
                 for (int bit = 0; bit < 8; bit++)
                 {
-                    int x = (startX + bit) % SWidth;
-                    int y = (startY + i) % SHeight;
+                    int x = (startX + bit);
+                    int y = (startY + i);
+                    if (x >= SWidth || y >= SHeight)
+                        continue;
 
                     byte spriteBit = (byte)((spriteByte >> (7 - bit)) & 0x01);
                     byte oldBit = (byte)(gfx[x, y] ? 1 : 0);
@@ -556,7 +608,8 @@ namespace CHIP_8Emu
                 // FX55 - Stores V0 to VX (including VX) in memory starting
                 //        at address I.
                 case 0x55:
-                    UnimplementedInstruction();
+                    for (int i = 0; i <= op.X; i++)
+                        memory[I + i] = V[i];
                     break;
                 // FX65 - Fills V0 to VX (including VX) with values from
                 //        memory starting at address I.
