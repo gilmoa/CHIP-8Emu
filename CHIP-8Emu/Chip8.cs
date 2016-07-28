@@ -95,7 +95,7 @@ namespace CHIP_8Emu
                 { 0xf, More }
             };
 
-            // On init load my custom rom
+            // On init load my custom ROM
             LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
@@ -123,7 +123,6 @@ namespace CHIP_8Emu
 
             // Load first 0x200 bytes with fontset
             LoadMemory(FontSet, 0x00);
-            LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
         // Halt execution
@@ -229,11 +228,10 @@ namespace CHIP_8Emu
         // Load program at path into execution memory
         public void LoadROM(string path)
         {
-            if(File.Exists(path))
-            {
-                Array.Clear(memory, 0, memory.Length);
+            if (File.Exists(path))
                 LoadMemory(File.ReadAllBytes(path), 0x200);
-            }
+            else
+                LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
         // Get OpCode from memory
