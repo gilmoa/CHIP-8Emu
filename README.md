@@ -1,6 +1,6 @@
 # CHIP-8Emu
-My test at writing an emulator. It works fine, not top notch, 
-but I tell myself it's because it wasn't meant to be good in 
+My test at writing an emulator. It works fine, not top notch. 
+I tell myself it's because it wasn't meant to be good in 
 the first place.
 
 ***
