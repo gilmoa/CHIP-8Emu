@@ -15,6 +15,7 @@ namespace CHIP_8Emu
         private Bitmap screen;
         private TimeSpan clock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 400);
         private TimeSpan screenClock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+        private string ROM = "MAZE";
 
         public MainForm()
         {
@@ -27,11 +28,11 @@ namespace CHIP_8Emu
             KeyUp += MapKeyUp;
         }
 
-        protected override void OnLoad(EventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
             Chip8 = new Chip8(DrawScreen, Beep);
-
-            Chip8.LoadROM("rom/INVADERS");
+            
+            Chip8.LoadROM(ROM);
 
             Task.Run(CPULoop);
             Task.Run(TimersLoop);
@@ -72,7 +73,22 @@ namespace CHIP_8Emu
 
         private void MapKeyDown(object sender, KeyEventArgs e)
         {
-            if (KeyMap.ContainsKey(e.KeyCode))
+            if(e.Control && e.KeyCode == Keys.R)
+            {
+                Chip8.Sleep();
+                Chip8.Reset();
+                Chip8.LoadROM(ROM);
+                Chip8.Wake();
+            }
+            else if(e.Control && e.KeyCode == Keys.O)
+            {
+                Chip8.Sleep();
+                OpenROM();
+                Chip8.Reset();
+                Chip8.LoadROM(ROM);
+                Chip8.Wake();
+            }
+            else if (KeyMap.ContainsKey(e.KeyCode))
                 Chip8.KeyDown(KeyMap[e.KeyCode]);
         }
 
@@ -96,6 +112,14 @@ namespace CHIP_8Emu
         private void Beep(int ms)
         {
             Console.Beep(459, ms);
+        }
+
+        private void OpenROM()
+        {
+            OpenFileDialog fd = new OpenFileDialog();
+            fd.ShowDialog();
+            ROM = fd.FileName;
+            this.Text = "CHIP-8 Emulator : " + ROM.Substring(ROM.Length-10, 10);
         }
 
         private Bitmap ResizeBitmap(Bitmap original, int width, int height, InterpolationMode interpolation = InterpolationMode.NearestNeighbor)

@@ -56,6 +56,7 @@ namespace CHIP_8Emu
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CHIP-8 Emulator";
+            this.Load += new System.EventHandler(this.MainForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.screenPB)).EndInit();
             this.ResumeLayout(false);
 
