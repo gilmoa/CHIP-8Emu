@@ -459,7 +459,7 @@ namespace CHIP_8Emu
                     V[op.X] *= 2;
                     break;
                 default:
-                    UnimplementedInstruction();
+                    BadOpCode();
                     break;
             }
         }
@@ -554,7 +554,7 @@ namespace CHIP_8Emu
                         pc += 2;
                     break;
                 default:
-                    UnimplementedInstruction();
+                    BadOpCode();
                     break;
             }
         }
@@ -618,7 +618,7 @@ namespace CHIP_8Emu
                         V[i] = memory[I + i];
                     break;
                 default:
-                    UnimplementedInstruction();
+                    BadOpCode();
                     break;
             }
         }

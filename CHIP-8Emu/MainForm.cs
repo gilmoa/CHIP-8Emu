@@ -15,7 +15,7 @@ namespace CHIP_8Emu
         private Bitmap screen;
         private TimeSpan clock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 400);
         private TimeSpan screenClock = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-        private string ROM = "MAZE";
+        private string ROM = "rom/GILMO";
 
         public MainForm()
         {
