@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace CHIP_8Emu
 {
@@ -45,24 +44,25 @@ namespace CHIP_8Emu
         List<byte> keyPressed = new List<byte>();
 
         // Standard CHIP 8 Fontset
+        // 5 byte each
         private byte[] FontSet = new byte[]
         {
-            0xF0, 0x90, 0x90, 0x90, 0xF0,
-            0x20, 0x60, 0x20, 0x20, 0x70,
-            0xF0, 0x10, 0xF0, 0x80, 0xF0,
-            0xF0, 0x10, 0xF0, 0x10, 0xF0,
-            0x90, 0x90, 0xF0, 0x10, 0x10,
-            0xF0, 0x80, 0xF0, 0x10, 0xF0,
-            0xF0, 0x80, 0xF0, 0x90, 0xF0,
-            0xF0, 0x10, 0x20, 0x40, 0x40,
-            0xF0, 0x90, 0xF0, 0x90, 0xF0,
-            0xF0, 0x90, 0xF0, 0x10, 0xF0,
-            0xF0, 0x90, 0xF0, 0x90, 0x90,
-            0xE0, 0x90, 0xE0, 0x90, 0xE0,
-            0xF0, 0x80, 0x80, 0x80, 0xF0,
-            0xE0, 0x90, 0x90, 0x90, 0xE0,
-            0xF0, 0x80, 0xF0, 0x80, 0xF0,
-            0xF0, 0x80, 0xF0, 0x80, 0x80
+            0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+            0x20, 0x60, 0x20, 0x20, 0x70, // 1
+            0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+            0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+            0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+            0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+            0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+            0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+            0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+            0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+            0xF0, 0x90, 0xF0, 0x90, 0x90, // a
+            0xE0, 0x90, 0xE0, 0x90, 0xE0, // b
+            0xF0, 0x80, 0x80, 0x80, 0xF0, // c
+            0xE0, 0x90, 0x90, 0x90, 0xE0, // d
+            0xF0, 0x80, 0xF0, 0x80, 0xF0, // e
+            0xF0, 0x80, 0xF0, 0x80, 0x80  // f
         };
         
         // Constructor allow hardware emulation to pass custom
@@ -99,7 +99,7 @@ namespace CHIP_8Emu
             LoadMemory(Properties.Resources.GILMO, 0x200);
         }
 
-        // Reset CPU starting state
+        // Reset CPU and memory to starting state
         public void Reset()
         {
             Array.Clear(memory, 0, memory.Length);      // memory
@@ -143,11 +143,11 @@ namespace CHIP_8Emu
         // SET OF DEBBUGING FUNCTIONS
         //
 
-        // Dump CPU state to file @"cpu.dump"
-        private void DumpCPUState()
+        // Dump State to file @"state.dump"
+        private void DumpState()
         {
             List<string> lines = new List<string>();
-            lines.Add("CHIP 8 CPU STATE DUMP");
+            lines.Add("CHIP 8 STATE DUMP");
             // Counters
             lines.Add("COUNTERS".PadRight(15, '='));
             lines.Add("I [0x" + I.ToString("x04") + "]     SP [0x" + sp.ToString("x02") +"]     PC [0x" + pc.ToString("x04") + "]");
@@ -193,7 +193,7 @@ namespace CHIP_8Emu
             // End
             lines.Add("END".PadRight(15, '='));
             // Write out
-            File.WriteAllLines(@"cpu.dump", lines.ToArray());
+            File.WriteAllLines(@"state.dump", lines.ToArray());
         }
 
         // Unimplemented Instruction handler
@@ -203,11 +203,11 @@ namespace CHIP_8Emu
             pc -= 2;
             ushort opcode = GetOpCode();
 
-            DumpCPUState();
+            DumpState();
 
             System.Windows.Forms.MessageBox.Show(
                 "Unimplemented Instruction:\n\n" + opcode.ToString("x04") + " - found at 0x" + pc.ToString("x04") + "." +
-                "\n\nCPU State Dumped to 'cpu.dump'.",
+                "\n\nState Dumped to 'state.dump'.",
                 "Unimplemented Instruction",
                 System.Windows.Forms.MessageBoxButtons.OK,
                 System.Windows.Forms.MessageBoxIcon.Error);
@@ -230,7 +230,10 @@ namespace CHIP_8Emu
         public void LoadROM(string path)
         {
             if(File.Exists(path))
+            {
+                Array.Clear(memory, 0, memory.Length);
                 LoadMemory(File.ReadAllBytes(path), 0x200);
+            }
         }
 
         // Get OpCode from memory
@@ -261,13 +264,13 @@ namespace CHIP_8Emu
             pc -= 2;
             ushort opcode = GetOpCode();
             
-            DumpCPUState();
+            DumpState();
 
             // MessageBox the OpCode
             System.Windows.Forms.MessageBox.Show(
                 "Bad OpCode:\n\n" + opcode.ToString("x04") + " - found at 0x" + pc.ToString("x04") + "." +
                 "\n\nIs not a valid OpCode." +
-                "\n\nCPU State Dumped to 'cpu.dump'.",
+                "\n\nState Dumped to 'state.dump'.",
                 "Bad OpCode",
                 System.Windows.Forms.MessageBoxButtons.OK,
                 System.Windows.Forms.MessageBoxIcon.Error);

@@ -33,13 +33,12 @@ namespace CHIP_8Emu
         private void MainForm_Load(object sender, EventArgs e)
         {
             Chip8 = new Chip8(DrawScreen, Beep);
-
-            beepSound.Load();
             
             Task.Run(CPULoop);
             Task.Run(TimersLoop);
         }
 
+        // CPULoop should run at 400Hz
         Task CPULoop()
         {
             while (true)
@@ -49,6 +48,7 @@ namespace CHIP_8Emu
             }
         }
 
+        // TimersLoop should run at 60Hz
         Task TimersLoop()
         {
             while (true)
@@ -58,6 +58,11 @@ namespace CHIP_8Emu
             }
         }
 
+        // KeyMap for general hardware KeyPad
+        // 1 2 3 C |=> 1 2 3 4
+        // 4 5 6 D |=> Q W E R
+        // 7 8 9 E |=> A S D F
+        // A 0 B F |=> Z X C V
         private Dictionary<Keys, byte> KeyMap = new Dictionary<Keys, byte>()
         {
             { Keys.D1, 0x1 }, { Keys.D2, 0x2 },
@@ -75,6 +80,7 @@ namespace CHIP_8Emu
 
         private void MapKeyDown(object sender, KeyEventArgs e)
         {
+            // CTRL + R = Reset
             if(e.Control && e.KeyCode == Keys.R)
             {
                 Chip8.Sleep();
@@ -82,6 +88,7 @@ namespace CHIP_8Emu
                 Chip8.LoadROM(ROM);
                 Chip8.Wake();
             }
+            // CTRL + O = Open
             else if(e.Control && e.KeyCode == Keys.O)
             {
                 Chip8.Sleep();
@@ -90,16 +97,19 @@ namespace CHIP_8Emu
                 Chip8.LoadROM(ROM);
                 Chip8.Wake();
             }
+            // Send key press to Chip if mapped
             else if (KeyMap.ContainsKey(e.KeyCode))
                 Chip8.KeyDown(KeyMap[e.KeyCode]);
         }
 
         private void MapKeyUp(object sender, KeyEventArgs e)
         {
+            // Send key release to Chip if mapped
             if (KeyMap.ContainsKey(e.KeyCode))
                 Chip8.KeyUp(KeyMap[e.KeyCode]);
         }
 
+        // DrawScreen function for Chip8()
         private void DrawScreen(bool[,] gfx)
         {
             for (int y = 0; y < 32; y++)
@@ -111,11 +121,13 @@ namespace CHIP_8Emu
             screenPB.Image = ResizeBitmap(screen, screenPB.Width, screenPB.Height);
         }
 
+        // Beep function for Chip8()
         private void Beep(int ms)
         {
             beepSound.Play();
         }
 
+        // Select MOD with Dialog
         private void OpenROM()
         {
             OpenFileDialog fd = new OpenFileDialog();
@@ -124,6 +136,8 @@ namespace CHIP_8Emu
             this.Text = "CHIP-8 Emulator : " + ROM.Substring(ROM.Length-10, 10);
         }
 
+        // Resize Bitmap
+        // We can work on 64x32 pixel and then scale with proper interpolation
         private Bitmap ResizeBitmap(Bitmap original, int width, int height, InterpolationMode interpolation = InterpolationMode.NearestNeighbor)
         {
             Bitmap res = new Bitmap(width, height);
