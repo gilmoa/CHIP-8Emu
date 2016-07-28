@@ -5,9 +5,10 @@ My test at writing an emulator.
 
 ## TODOs
  1. `Beep()` still confusing.
- 2. Input might still need fixing.
- 3. `0xDXYN` looks like shit and might not be working as intended.
- 4. `DrawScreen()` works fine but might need a review.
+ 2. `Thread.Sleep()` needs to be replaced by proper time based delay.
+ 3. Input might still need fixing.
+ 4. `0xDXYN` looks like shit and might not be working as intended.
+ 5. `DrawScreen()` works fine but might need a review.
 
 ***
 
